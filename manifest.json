@@ -11,24 +11,9 @@
   ],
   "codegenPreferences": [
     {
-      "itemType": "unit",
-      "scaledUnit": "Sample Unit (su)",
-      "defaultScaleFactor": 0.7,
-      "default": false
-    },
-    {
-      "itemType": "select",
-      "propertyName": "example",
-      "label": "Yes or no",
-      "options": [
-        { "label": "Yes", "value": "yes", "isDefault": true },
-        { "label": "No", "value": "no" }
-      ]
-    },
-    {
       "itemType": "action",
       "propertyName": "example",
-      "label": "Example action"
+      "label": "Open Custom Actions Panel"
     }
   ],
   "main": "dist/code.js",
