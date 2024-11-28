@@ -1,7 +1,7 @@
 {
   "name": "omniverse-stylesgen",
   "version": "1.0.0",
-  "description": "",
+  "description": "Generate Omniverse styles using Figma Cogegen Plugin",
   "main": "index.js",
   "scripts": {
     "build": "npm run build:ui && npm run build:main -- --minify",
@@ -10,8 +10,8 @@
     "build:watch": "concurrently -n widget,iframe \"npm run build:main -- --watch\" \"npm run build:ui -- --watch\"",
     "dev": "concurrently -n build,vite 'npm:build:watch' 'vite'"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Matthew Mazzola",
+  "license": "MIT",
   "dependencies": {
     "@figma/plugin-typings": "^1.62.0",
     "concurrently": "^8.0.1",
