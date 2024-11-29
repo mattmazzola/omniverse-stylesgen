@@ -2,8 +2,6 @@ import { Language } from "./types"
 import { processCollection } from "./helpers"
 
 export async function onPreferencesChanged(event: CodegenPreferencesEvent) {
-    console.log("Preferences changed", event)
-
     if (event.propertyName === "iframe") {
         figma.showUI(
             __html__,
@@ -14,7 +12,18 @@ export async function onPreferencesChanged(event: CodegenPreferencesEvent) {
                 themeColors: true,
             }
         )
+        
+        console.log("Preferences changed", event)
+        const localCollections = await figma.variables.getLocalVariableCollectionsAsync()
+    
+        const files = []
+        for (const localCollection of localCollections) {
+            const collectionFiles = await processCollection(localCollection)
+            files.push(...collectionFiles)
+        }
+        console.log({ files })
     }
+
 }
 
 export async function onGenerate(event: CodegenEvent): Promise<CodegenResult[]> {
@@ -26,15 +35,6 @@ export async function onGenerate(event: CodegenEvent): Promise<CodegenResult[]> 
         width: node.width,
         height: node.height,
     }
-
-    const localCollections = await figma.variables.getLocalVariableCollectionsAsync()
-
-    const files = []
-    for (const localCollection of localCollections) {
-        const collectionFiles = await processCollection(localCollection)
-        files.push(...collectionFiles)
-    }
-    console.log({ files })
 
     const blocks: CodegenResult[] = []
 

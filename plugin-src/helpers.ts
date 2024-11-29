@@ -1,4 +1,4 @@
-import { rgbToHex } from "./utilities"
+import { deepMerge, rgbToHex } from "./utilities"
 
 export async function processCollection(collection: VariableCollection) {
   const files = []
@@ -14,7 +14,7 @@ export async function processCollection(collection: VariableCollection) {
 async function getPrimativesFiles(collection: VariableCollection) {
   const { variableIds, modes } = collection
   
-  // // TODO: Add support for multiple modes
+  // TODO: Add support for multiple modes
   const mode = modes[0]
   
   const colorsFile = { fileName: "colors.ts", body: {} }
@@ -29,7 +29,8 @@ async function getPrimativesFiles(collection: VariableCollection) {
     
     if (variable.name.toLowerCase().includes("color")) {
       const processedColorVariable = await processColorVariable(variable, mode)
-      Object.assign(colorsFile.body, processedColorVariable)
+      console.log({ processedColorVariable })
+      deepMerge(colorsFile.body, processedColorVariable["color"])
     }
   }
 
