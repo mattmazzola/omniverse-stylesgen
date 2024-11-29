@@ -58,23 +58,28 @@ export async function onGenerate(event: CodegenEvent): Promise<CodegenResult[]> 
         figma.ui.postMessage(message)
     })
 
-    console.log({ blocks})
-    
+    console.log({ blocks })
+
     let expectedMessageCount = blocks.length
     const results: any[] = []
 
-    return new Promise(async (resolve) => {
-        figma.ui.onmessage = (message) => {
-            if (message.type === "FORMAT_RESULT") {
-                const item = blocks[message.id]
-                results[message.id] = Object.assign(item, {
-                    code: message.result,
-                })
-                expectedMessageCount--
-                if (expectedMessageCount <= 0) {
-                    resolve(results)
-                }
+    let promiseResolve: (value: CodegenResult[]) => void
+    const promise = new Promise<CodegenResult[]>((resolve) => {
+        promiseResolve = resolve
+    })
+
+    figma.ui.onmessage = (message) => {
+        if (message.type === "FORMAT_RESULT") {
+            const item = blocks[message.id]
+            results[message.id] = Object.assign(item, {
+                code: message.result,
+            })
+            expectedMessageCount--
+            if (expectedMessageCount <= 0) {
+                promiseResolve(results)
             }
         }
-    })
+    }
+
+    return promise
 }
