@@ -6,13 +6,12 @@
   "capabilities": ["codegen"],
   "permissions": [],
   "codegenLanguages": [
-    { "label": "Omniverse", "value": "omniverse" },
     { "label": "JSON", "value": "json" }
   ],
   "codegenPreferences": [
     {
       "itemType": "action",
-      "propertyName": "example",
+      "propertyName": "iframe",
       "label": "Open Custom Actions Panel"
     }
   ],

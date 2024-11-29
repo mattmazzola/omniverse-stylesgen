@@ -4,12 +4,14 @@ import { processCollection } from "./helpers"
 export async function onPreferencesChanged(event: CodegenPreferencesEvent) {
     console.log("Preferences changed", event)
 
-    if (event.propertyName === "example") {
+    if (event.propertyName === "iframe") {
         figma.showUI(
             __html__,
             {
                 width: 300,
                 height: 300,
+                // https://www.figma.com/plugin-docs/css-variables/#api-details
+                themeColors: true,
             }
         )
     }
