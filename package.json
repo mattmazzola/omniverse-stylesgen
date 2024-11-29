@@ -13,7 +13,7 @@
   "author": "Matthew Mazzola",
   "license": "MIT",
   "dependencies": {
-    "@figma/plugin-typings": "^1.62.0",
+    "@figma/plugin-typings": "^1.103.0",
     "concurrently": "^8.0.1",
     "esbuild": "^0.17.14",
     "prettier": "^2.8.7",
