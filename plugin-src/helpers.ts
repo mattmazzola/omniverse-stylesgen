@@ -1,3 +1,4 @@
+import { FileDescription } from "./types"
 import { deepMerge, rgbToHex } from "./utilities"
 
 export async function processCollection(collection: VariableCollection) {
@@ -11,15 +12,15 @@ export async function processCollection(collection: VariableCollection) {
   return files
 }
 
-async function getPrimativesFiles(collection: VariableCollection) {
+async function getPrimativesFiles(collection: VariableCollection): Promise<FileDescription[]> {
   const { variableIds, modes } = collection
   
   // TODO: Add support for multiple modes
   const mode = modes[0]
   
-  const colorsFile = { fileName: "colors.ts", body: {} }
-  const fontsFile = { fileName: "fonts.ts", body: {} }
-  const spacingFile = { fileName: "spacing.ts", body: {} }
+  const colorsFile: FileDescription = { name: "colors.ts", data: {}, serializedData: "Empty Data" }
+  const fontsFile: FileDescription = { name: "fonts.ts", data: {}, serializedData: "Empty Data" }
+  const spacingFile: FileDescription = { name: "spacing.ts", data: {}, serializedData: "Empty Data" }
   
   for (const variableId of variableIds) {
     const variable = await figma.variables.getVariableByIdAsync(variableId)
@@ -29,8 +30,7 @@ async function getPrimativesFiles(collection: VariableCollection) {
     
     if (variable.name.toLowerCase().includes("color")) {
       const processedColorVariable = await processColorVariable(variable, mode)
-      console.log({ processedColorVariable })
-      deepMerge(colorsFile.body, processedColorVariable["color"])
+      deepMerge(colorsFile.data, processedColorVariable["color"])
     }
   }
 

@@ -1,8 +1,8 @@
-import { Language } from "./types"
+import { Language, MessageEvents, PreferencePropertyTypes } from "./types"
 import { processCollection } from "./helpers"
 
 export async function onPreferencesChanged(event: CodegenPreferencesEvent) {
-    if (event.propertyName === "iframe") {
+    if (event.propertyName === PreferencePropertyTypes.IFRAME) {
         figma.showUI(
             __html__,
             {
@@ -22,13 +22,20 @@ export async function onPreferencesChanged(event: CodegenPreferencesEvent) {
             files.push(...collectionFiles)
         }
         console.log({ files })
+
+        // Send the message to the UI with the generated files
+        const message = {
+            event: MessageEvents.PREFERENCES_CHANGED,
+            files,
+        }
+
+        figma.ui.postMessage(message)
     }
 
 }
 
 export async function onGenerate(event: CodegenEvent): Promise<CodegenResult[]> {
     const { node, language } = event
-
     const nodeObject = {
         type: node.type,
         name: node.name,
@@ -38,14 +45,7 @@ export async function onGenerate(event: CodegenEvent): Promise<CodegenResult[]> 
 
     const blocks: CodegenResult[] = []
 
-    if (language === Language.Omniverse || language === Language.JSON) {
-        const block1: CodegenResult = {
-            title: `Omniverse`,
-            code: JSON.stringify(nodeObject),
-            language: "HTML",
-        }
-        blocks.push(block1)
-
+    if (language.toLowerCase() === Language.JSON) {
         const block2: CodegenResult = {
             title: `Custom JSON`,
             code: JSON.stringify(nodeObject),
@@ -56,14 +56,18 @@ export async function onGenerate(event: CodegenEvent): Promise<CodegenResult[]> 
 
     // For each block, add FORMAT, ID, and post it to the UI to be formatted
     blocks.forEach(({ language, code }, index) => {
-        const message = { type: "FORMAT", code, language, id: index }
+        const message = {
+            event: MessageEvents.FORMAT,
+            id: index,
+            code,
+            language,
+        }
+
         figma.ui.postMessage(message)
     })
 
-    console.log({ blocks })
-
     let expectedMessageCount = blocks.length
-    const results: any[] = []
+    const formattedBlocks: any[] = []
 
     let promiseResolve: (value: CodegenResult[]) => void
     const promise = new Promise<CodegenResult[]>((resolve) => {
@@ -71,14 +75,17 @@ export async function onGenerate(event: CodegenEvent): Promise<CodegenResult[]> 
     })
 
     figma.ui.onmessage = (message) => {
-        if (message.type === "FORMAT_RESULT") {
-            const item = blocks[message.id]
-            results[message.id] = Object.assign(item, {
-                code: message.result,
-            })
-            expectedMessageCount--
+        if (message.event === MessageEvents.FORMAT_RESULT) {
+            // Create block using with original block with the formatted code
+            const originalBlock = blocks[message.id]
+            formattedBlocks[message.id] = Object.assign(originalBlock, { code: message.result, })
+
+            // Decrement the expected message count
+            expectedMessageCount -= 1
+        
+            // If no remaining messages expected, then resolve the promise with the results
             if (expectedMessageCount <= 0) {
-                promiseResolve(results)
+                promiseResolve(formattedBlocks)
             }
         }
     }

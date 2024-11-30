@@ -1,4 +1,31 @@
 body {
     background-color: var(--figma-color-bg);
     color: var(--figma-color-text);
+    font-family: var(--figma-font-family);
+}
+
+h1 {
+    color: var(--figma-color-text);
+}
+
+#download {
+    background-color: var(--figma-color-bg-brand);
+    border: 1px solid var(--figma-color-border-brand);
+    color: var(--figma-color-text-brand);
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#download:hover {
+    background-color: var(--figma-color-bg-brand-hover);
+    border: 1px solid var(--figma-color-border-brand-hover);
+    color: var(--figma-color-text-brand-hover);
+}
+
+#download:disabled {
+    background-color: var(--figma-color-bg-brand-disabled);
+    border: 1px solid var(--figma-color-border-brand-hover);
+    color: var(--figma-color-text-brand-disabled);
+    cursor: not-allowed;
 }

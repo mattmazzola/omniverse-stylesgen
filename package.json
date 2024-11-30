@@ -16,6 +16,7 @@
     "@figma/plugin-typings": "^1.103.0",
     "concurrently": "^8.0.1",
     "esbuild": "^0.17.14",
+    "jszip": "^3.10.1",
     "prettier": "^2.8.7",
     "vite": "^4.2.1",
     "vite-plugin-singlefile": "^0.13.3"
