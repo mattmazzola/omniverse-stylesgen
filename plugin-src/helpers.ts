@@ -1,5 +1,6 @@
 import { FileDescription, FileGroup } from "./types"
 import { deepMerge, rgbToHex } from "./utilities"
+import { template as colorsTemplate } from "./templates/colors"
 
 export async function processCollection(collection: VariableCollection) {
   const files = []
@@ -12,11 +13,28 @@ export async function processCollection(collection: VariableCollection) {
   return files
 }
 
-async function serializeData(data: object): Promise<string> {
-  return JSON.stringify(data, null, 2)
+function serializeData(root_type: string) {
+  return async function innerSerialize(data: object): Promise<string> {
+    debugger
+    let serializedData = ''
+
+    for (const [key, value] of Object.entries(data)) {
+      let line = `${root_type}`
+
+      // If the value is an object, iterate through nested objects until we reach leaf objects which has a $type key
+
+      serializedData += line + "\n"
+    }
+
+    return `
+${serializedData}
+
+${colorsTemplate}
+`
+  }
 }
 
-async function getPrimativesFiles(collection: VariableCollection): Promise<FileDescription<object | string>[]> {
+async function getPrimativesFiles(collection: VariableCollection): Promise<FileDescription[]> {
   const { variableIds, modes } = collection
 
   // TODO: Add support for multiple modes
@@ -33,8 +51,9 @@ async function getPrimativesFiles(collection: VariableCollection): Promise<FileD
       pythonFile: {
         name: "colors.py",
         data: "Empty Data",
-      }
-    }, 
+      },
+      serializer: serializeData("color"),
+    },
     {
       variableRootType: "structure",
       data: {},
@@ -45,10 +64,12 @@ async function getPrimativesFiles(collection: VariableCollection): Promise<FileD
       pythonFile: {
         name: "structure.py",
         data: "Empty Data",
-      }
+      },
+      serializer: serializeData("structure"),
     }
   ]
 
+  // Merge all variable data into the filesInformation
   for (const variableId of variableIds) {
     const variable = await figma.variables.getVariableByIdAsync(variableId)
     if (!variable) {
@@ -59,13 +80,15 @@ async function getPrimativesFiles(collection: VariableCollection): Promise<FileD
       if (variable.name.toLowerCase().includes(fileInformation.variableRootType)) {
         const processedVariable = await processColorOrFloatVariable(variable, mode)
         deepMerge(fileInformation.data, processedVariable[fileInformation.variableRootType])
-        
-        fileInformation.jsonFile.data = JSON.stringify(fileInformation.data, null, 2)
       }
     }
   }
 
-  console.log({ filesInformation })
+  // Serialize the data and add it to the files
+  for (const fileInformation of filesInformation) {
+    fileInformation.jsonFile.data = JSON.stringify(fileInformation.data, null, 2)
+    fileInformation.pythonFile.data = await fileInformation.serializer(fileInformation.data)
+  }
 
   const files = filesInformation.flatMap(fi => [fi.jsonFile, fi.pythonFile])
 

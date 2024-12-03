@@ -22,4 +22,5 @@ export type FileGroup = {
     data: object
     jsonFile: FileDescription
     pythonFile: FileDescription
+    serializer: (data: object) => Promise<string>
 }

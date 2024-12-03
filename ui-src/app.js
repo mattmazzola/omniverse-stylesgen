@@ -5,24 +5,26 @@ const MessageEvents = {
 }
 
 async function onPreferencesChangeMessage(pluginMessage) {
-
   const zip = new JSZip()
+
   pluginMessage.files.forEach(file => {
     const { name, data } = file
     zip.file(name, data)
   })
 
-  async function simulateDownload() {
-    const filesBlob = await zip.generateAsync({ type: "blob" })
-    const url = URL.createObjectURL(filesBlob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "omniverse_design_files.zip"
-    a.click()
+  function simulateDownload(filename) {
+    return async () => {
+      const filesBlob = await zip.generateAsync({ type: "blob" })
+      const url = URL.createObjectURL(filesBlob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = filename
+      a.click()
+    }
   }
 
   const downloadButton = document.getElementById("download")
-  downloadButton.onclick = simulateDownload
+  downloadButton.onclick = simulateDownload("omniverse_design_files.zip")
 }
 
 const messageEventToHandler = {
