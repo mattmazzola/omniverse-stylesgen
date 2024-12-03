@@ -6,8 +6,8 @@ export async function onPreferencesChanged(event: CodegenPreferencesEvent) {
         figma.showUI(
             __html__,
             {
-                width: 300,
-                height: 300,
+                width: 500,
+                height: 200,
                 // https://www.figma.com/plugin-docs/css-variables/#api-details
                 themeColors: true,
             }
