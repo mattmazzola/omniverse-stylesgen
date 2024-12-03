@@ -18,28 +18,35 @@ export function toHex(float: number) {
 }
 
 export function isObject(item: any) {
-return (item && typeof item === 'object' && !Array.isArray(item));
+    return (item && typeof item === 'object' && !Array.isArray(item))
 }
-  
+
 /**
  * Deep merge two objects.
  * @param target
  * @param ...sources
  */
 export function deepMerge(target: any, ...sources: any[]) {
-if (!sources.length) return target;
-const source = sources.shift();
+    if (!sources.length) return target
+    const source = sources.shift()
 
-if (isObject(target) && isObject(source)) {
-    for (const key in source) {
-    if (isObject(source[key])) {
-        if (!target[key]) Object.assign(target, { [key]: {} });
-        deepMerge(target[key], source[key]);
-    } else {
-        Object.assign(target, { [key]: source[key] });
+    if (isObject(target) && isObject(source)) {
+        for (const key in source) {
+            const sourceValue = source[key]
+            // If sourceValue is object, recurievly apply deepMerge
+            // Otherwise, assign the value to target
+            if (isObject(sourceValue)) {
+                // If target[key] doesn't exist, create an empty object
+                if (!target[key]) {
+                    Object.assign(target, { [key]: {} })
+                }
+                
+                deepMerge(target[key], sourceValue)
+            } else {
+                Object.assign(target, { [key]: sourceValue })
+            }
+        }
     }
-    }
-}
 
-return deepMerge(target, ...sources);
+    return deepMerge(target, ...sources)
 }
