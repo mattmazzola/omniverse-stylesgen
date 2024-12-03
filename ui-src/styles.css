@@ -1,26 +1,44 @@
 body {
     background-color: var(--figma-color-bg);
     color: var(--figma-color-text);
-    font-family: var(--figma-font-family);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+}
+
+h1, h2, h3, h4, h5, h6, p {
+    margin: 0;
+    padding: 0;
 }
 
 h1 {
     color: var(--figma-color-text);
 }
 
+#download-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 1rem;
+}
+
 #download {
+    display: block;
     background-color: var(--figma-color-bg-brand);
     border: 1px solid var(--figma-color-border-brand);
-    color: var(--figma-color-text-brand);
+    color: var(--figma-color-text-onbrand);
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
+    text-align: center;
+    text-wrap: nowrap;
 }
 
 #download:hover {
     background-color: var(--figma-color-bg-brand-hover);
-    border: 1px solid var(--figma-color-border-brand-hover);
+    border-color: 1px solid var(--figma-color-border-brand-strong);
     color: var(--figma-color-text-brand-hover);
+
 }
 
 #download:disabled {

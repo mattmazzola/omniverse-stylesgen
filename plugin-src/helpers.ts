@@ -1,4 +1,4 @@
-import { FileDescription } from "./types"
+import { FileDescription, FileGroup } from "./types"
 import { deepMerge, rgbToHex } from "./utilities"
 
 export async function processCollection(collection: VariableCollection) {
@@ -12,33 +12,62 @@ export async function processCollection(collection: VariableCollection) {
   return files
 }
 
-async function getPrimativesFiles(collection: VariableCollection): Promise<FileDescription[]> {
+async function serializeData(data: object): Promise<string> {
+  return JSON.stringify(data, null, 2)
+}
+
+async function getPrimativesFiles(collection: VariableCollection): Promise<FileDescription<object | string>[]> {
   const { variableIds, modes } = collection
-  
+
   // TODO: Add support for multiple modes
   const mode = modes[0]
-  
-  const colorsFile: FileDescription = { name: "colors.ts", data: {}, serializedData: "Empty Data" }
-  const fontsFile: FileDescription = { name: "fonts.ts", data: {}, serializedData: "Empty Data" }
-  const spacingFile: FileDescription = { name: "spacing.ts", data: {}, serializedData: "Empty Data" }
-  
+
+  const filesInformation: FileGroup[] = [
+    {
+      variableRootType: "color",
+      data: {},
+      jsonFile: {
+        name: "colors.json",
+        data: "Empty Data",
+      },
+      pythonFile: {
+        name: "colors.py",
+        data: "Empty Data",
+      }
+    }, 
+    {
+      variableRootType: "structure",
+      data: {},
+      jsonFile: {
+        name: "structure.json",
+        data: "Empty Data",
+      },
+      pythonFile: {
+        name: "structure.py",
+        data: "Empty Data",
+      }
+    }
+  ]
+
   for (const variableId of variableIds) {
     const variable = await figma.variables.getVariableByIdAsync(variableId)
     if (!variable) {
       throw new Error(`Variable with ID ${variableId} not found`)
     }
-    
-    if (variable.name.toLowerCase().includes("color")) {
-      const processedColorVariable = await processColorVariable(variable, mode)
-      deepMerge(colorsFile.data, processedColorVariable["color"])
+
+    for (const fileInformation of filesInformation) {
+      if (variable.name.toLowerCase().includes(fileInformation.variableRootType)) {
+        const processedVariable = await processColorOrFloatVariable(variable, mode)
+        deepMerge(fileInformation.data, processedVariable[fileInformation.variableRootType])
+        
+        fileInformation.jsonFile.data = JSON.stringify(fileInformation.data, null, 2)
+      }
     }
   }
 
-  const files = [
-    colorsFile,
-    fontsFile,
-    spacingFile,
-  ]
+  console.log({ filesInformation })
+
+  const files = filesInformation.flatMap(fi => [fi.jsonFile, fi.pythonFile])
 
   return files
 }
@@ -59,7 +88,7 @@ type VariableMode = {
   name: string
 }
 
-async function processColorVariable(variable: Variable, mode: VariableMode) {
+async function processColorOrFloatVariable(variable: Variable, mode: VariableMode) {
   const { name, resolvedType, valuesByMode } = variable
   const rootObj: any = {}
   let obj = rootObj

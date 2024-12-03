@@ -4,32 +4,36 @@ const MessageEvents = {
   PREFERENCES_CHANGED: "PREFERENCES_CHANGED",
 }
 
-
 async function onPreferencesChangeMessage(pluginMessage) {
 
   const zip = new JSZip()
   pluginMessage.files.forEach(file => {
-    const { name, data, serializedData } = file
-    zip.file(name, serializedData)
+    const { name, data } = file
+    zip.file(name, data)
   })
 
-  const filesBlob = await zip.generateAsync({ type: "blob" })
-  const url = URL.createObjectURL(filesBlob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = "files.zip"
-  a.click()
+  async function simulateDownload() {
+    const filesBlob = await zip.generateAsync({ type: "blob" })
+    const url = URL.createObjectURL(filesBlob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "omniverse_design_files.zip"
+    a.click()
+  }
+
+  const downloadButton = document.getElementById("download")
+  downloadButton.onclick = simulateDownload
 }
 
 const messageEventToHandler = {
-  [MessageEvents.FORMAT]: onFormatMessage,
   [MessageEvents.PREFERENCES_CHANGED]: onPreferencesChangeMessage,
 }
 
-window.onmessage = (message) => {
+function onMessageEvent(message) {
+  console.debug("UI.onmessage", { message })
 
-  console.log("UI.onmessage", { message })
-
+  // Get plugin message from the event
+  // Note: Figma sends messages without data so we must check before processing
   const { data: { pluginMessage } } = message
   if (!pluginMessage) {
     console.log("Message did not contain pluginMessage!")
@@ -37,9 +41,13 @@ window.onmessage = (message) => {
   }
 
   const messageHandler = messageEventToHandler[pluginMessage.event]
-  console.log({ messageHandler })
   if (messageHandler) {
     messageHandler(pluginMessage)
   }
-};
+  else {
+    console.warn(`No handler for event: ${pluginMessage.event}`)
+  }
+}
+
+window.onmessage = onMessageEvent
 

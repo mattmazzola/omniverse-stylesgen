@@ -14,6 +14,12 @@ export enum MessageEvents {
 
 export type FileDescription = {
     name: string
+    data: string
+}
+
+export type FileGroup = {
+    variableRootType: string
     data: object
-    serializedData: string
+    jsonFile: FileDescription
+    pythonFile: FileDescription
 }
