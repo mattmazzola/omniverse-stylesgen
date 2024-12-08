@@ -1,3 +1,4 @@
+export let template = `
 from .tokens import *
 
 general_styles = {}
@@ -278,3 +279,4 @@ styles = {
     **combobox_styles_secondary,
     **demonstration_outcome_indicators,
 }
+`

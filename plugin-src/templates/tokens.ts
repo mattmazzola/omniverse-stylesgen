@@ -1,3 +1,4 @@
+export let template = `
 from .colors import *
 from .fonts import *
 from .structure import *
@@ -77,3 +78,4 @@ token_font_size_h4 = font_size_md
 
 token_font_size_sm = font_size_sm
 token_font_size_xs = font_size_xs
+`
