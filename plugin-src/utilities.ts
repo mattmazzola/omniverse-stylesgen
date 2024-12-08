@@ -11,7 +11,7 @@ export function rgbToHex({ r, g, b, a }: RGBA) {
     return `#${hex}`
 }
 
-export function rgbaToHsla(r: number, g: number, b: number, a: number) {
+export function rgbaToHsla({ r, g, b, a }: RGBA) {
     const max = Math.max(r, g, b)
     const min = Math.min(r, g, b)
     let h = 0

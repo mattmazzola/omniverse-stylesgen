@@ -7,7 +7,6 @@ import { template as fontsTemplate } from "./templates/fonts"
 
 export async function processCollection(collection: VariableCollection) {
   const files: FileDescription[] = []
-  debugger
 
   if (collection.name.toLowerCase().includes("primitives")) {
     const primativeFiles = await getPrimativesFiles(collection)
@@ -135,6 +134,8 @@ function serializeData(root_type: string, template: string) {
   return async function innerSerialize(data: object): Promise<string> {
     let serializedData = ''
 
+    debugger
+
     for (const [key, value] of Object.entries(data)) {
       const [color_hue, color_value_lines] = getLines(value)
       const full_lines = color_value_lines.map(l => `${root_type}_${key}_${l}`)
@@ -167,13 +168,13 @@ function getLines(data: object): [number, string[]] {
       // If the value has a $type key, then it's a leaf object
       if (typeof value["$type"] === "string"
         && typeof value["$rgba"] === "object") {
-        const { r, g, b, a } = value["$rgba"]
+        const { r, g, b, a: rbgAlpha } = value["$rgba"]
         const rInt = Math.round(r * 255)
         const gInt = Math.round(g * 255)
         const bInt = Math.round(b * 255)
-        const { h, s, l } = rgbaToHsla(r, g, b, a)
+        const { h, s, l, a: hslAlpha } = value["$hsla"]
         hue = h
-      
+
         line += ` = convert_hsl_to_colorshade(${h.toFixed(0)}, ${s.toFixed(0)}, ${l.toFixed(0)})`
         lines.push(line)
       }
@@ -217,13 +218,15 @@ async function processColorOrFloatVariable(variable: Variable, mode: VariableMod
       obj.$value = `{${currentVar.name.replace(/\//g, ".")}}`
     } else {
       if (resolvedType === "COLOR") {
-        // Assume COLOR is always RGBA ?
+        // TODO: Support other color types
+        // This code assumes COLOR is always RGBA which NOT be true
         const rgba = value as RGBA
         if (typeof rgba !== "object") {
           throw new Error(`Expected RGBA to be object, but got ${typeof rgba}. Variable: ${name} Value: ${value}`)
         }
 
         obj.$rgba = rgba
+        obj.$hsla = rgbaToHsla(rgba)
         obj.$value = rgbToHex(rgba)
       } else {
         obj.$value = value
