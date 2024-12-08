@@ -132,16 +132,10 @@ function getTemplate(template: string) {
 
 function serializeData(root_type: string, template: string) {
   return async function innerSerialize(data: object): Promise<string> {
-    let serializedData = ''
 
-    debugger
-
-    for (const [key, value] of Object.entries(data)) {
-      const [color_hue, color_value_lines] = getLines(value)
-      const full_lines = color_value_lines.map(l => `${root_type}_${key}_${l}`)
-      serializedData += `color_hue = ${color_hue}\n`
-      serializedData += full_lines.join("\n") + "\n"
-    }
+    const sequences = getKeysToLeaf(data)
+    const lines = sequences.map(s => getLine(s))
+    const serializedData = lines.join("\n") + "\n"
 
     return `
 ${serializedData}
@@ -151,7 +145,17 @@ ${template}
   }
 }
 
-function getLines(data: object): [number, string[]] {
+type ValueSequence = (number | string | object)[]
+
+function getKeysToLeaf(data: object): ValueSequence {
+  return []
+}
+
+function getLine(sequence: number | string | object): string {
+  return ""
+}
+
+function getLinesOld(data: object): [number, string[]] {
   const lines = []
   let hue = 0
 
