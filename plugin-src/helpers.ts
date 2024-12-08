@@ -1,19 +1,137 @@
 import { FileDescription, FileGroup } from "./types"
 import { deepMerge, rgbaToHsla, rgbToHex } from "./utilities"
 import { template as colorsTemplate } from "./templates/colors"
+import { template as structureTemplate } from "./templates/structure"
+import { template as tokensTemplate } from "./templates/tokens"
+import { template as fontsTemplate } from "./templates/fonts"
 
 export async function processCollection(collection: VariableCollection) {
-  const files = []
+  const files: FileDescription[] = []
+  debugger
 
   if (collection.name.toLowerCase().includes("primitives")) {
     const primativeFiles = await getPrimativesFiles(collection)
     files.push(...primativeFiles)
   }
+  else if (collection.name.toLowerCase().includes("tokens")) {
+    const tokensFiles = await getTokensFiles(collection)
+    files.push(...tokensFiles)
+  }
 
   return files
 }
 
-function serializeData(root_type: string) {
+
+async function getPrimativesFiles(collection: VariableCollection): Promise<FileDescription[]> {
+  const { variableIds, modes } = collection
+
+  // TODO: Add support for multiple modes
+  const mode = modes[0]
+
+  const filesInformation: FileGroup[] = [
+    {
+      variableRootType: "color",
+      data: {},
+      jsonFile: {
+        name: "colors.json",
+        data: "Empty Data",
+      },
+      pythonFile: {
+        name: "colors.py",
+        data: "Empty Data",
+      },
+      serializer: serializeData("color", colorsTemplate),
+    },
+    {
+      variableRootType: "structure",
+      data: {},
+      jsonFile: {
+        name: "structure.json",
+        data: "Empty Data",
+      },
+      pythonFile: {
+        name: "structure.py",
+        data: "Empty Data",
+      },
+      serializer: serializeData("structure", structureTemplate),
+    },
+    {
+      variableRootType: "font",
+      data: {},
+      jsonFile: {
+        name: "fonts.json",
+        data: JSON.stringify({}),
+      },
+      pythonFile: {
+        name: "fonts.py",
+        data: "Empty Data",
+      },
+      serializer: getTemplate(fontsTemplate),
+    },
+  ]
+
+  // Merge all variable data into the filesInformation
+  for (const variableId of variableIds) {
+    const variable = await figma.variables.getVariableByIdAsync(variableId)
+    if (!variable) {
+      throw new Error(`Variable with ID ${variableId} not found`)
+    }
+
+    for (const fileInformation of filesInformation) {
+      if (variable.name.toLowerCase().includes(fileInformation.variableRootType)) {
+        const processedVariable = await processColorOrFloatVariable(variable, mode)
+        deepMerge(fileInformation.data, processedVariable[fileInformation.variableRootType])
+      }
+    }
+  }
+
+  // Serialize the data and add it to the files
+  for (const fileInformation of filesInformation) {
+    fileInformation.jsonFile.data = JSON.stringify(fileInformation.data, null, 2)
+    fileInformation.pythonFile.data = await fileInformation.serializer(fileInformation.data)
+  }
+
+  const files = filesInformation.flatMap(fi => [fi.jsonFile, fi.pythonFile])
+
+  return files
+}
+
+
+async function getTokensFiles(collection: VariableCollection): Promise<FileDescription[]> {
+  const fileGroups: FileGroup[] = [
+    {
+      variableRootType: "token",
+      data: {},
+      jsonFile: {
+        name: "tokens.json",
+        data: JSON.stringify({}),
+      },
+      pythonFile: {
+        name: "tokens.py",
+        data: "Empty Data",
+      },
+      serializer: getTemplate(tokensTemplate),
+    },
+  ]
+
+  // Serialize the data and add it to the files
+  for (const fileGroup of fileGroups) {
+    fileGroup.jsonFile.data = JSON.stringify(fileGroup.data, null, 2)
+    fileGroup.pythonFile.data = await fileGroup.serializer(fileGroup.data)
+  }
+
+  const files = fileGroups.flatMap(fi => [fi.pythonFile])
+
+  return files
+}
+
+function getTemplate(template: string) {
+  return async function innerSerialize(data: object): Promise<string> {
+    return template
+  }
+}
+
+function serializeData(root_type: string, template: string) {
   return async function innerSerialize(data: object): Promise<string> {
     let serializedData = ''
 
@@ -27,7 +145,7 @@ function serializeData(root_type: string) {
     return `
 ${serializedData}
 
-${colorsTemplate}
+${template}
 `
   }
 }
@@ -37,7 +155,6 @@ function getLines(data: object): [number, string[]] {
   let hue = 0
 
   let line = ``
-  debugger
 
   for (const [key, value] of Object.entries(data)) {
     line = `${key.toLowerCase().replace(/-/g, "_")}`
@@ -69,78 +186,6 @@ function getLines(data: object): [number, string[]] {
   }
 
   return [hue, lines]
-}
-
-async function getPrimativesFiles(collection: VariableCollection): Promise<FileDescription[]> {
-  const { variableIds, modes } = collection
-
-  // TODO: Add support for multiple modes
-  const mode = modes[0]
-
-  const filesInformation: FileGroup[] = [
-    {
-      variableRootType: "color",
-      data: {},
-      jsonFile: {
-        name: "colors.json",
-        data: "Empty Data",
-      },
-      pythonFile: {
-        name: "colors.py",
-        data: "Empty Data",
-      },
-      serializer: serializeData("color"),
-    },
-    {
-      variableRootType: "structure",
-      data: {},
-      jsonFile: {
-        name: "structure.json",
-        data: "Empty Data",
-      },
-      pythonFile: {
-        name: "structure.py",
-        data: "Empty Data",
-      },
-      serializer: serializeData("structure"),
-    }
-  ]
-
-  // Merge all variable data into the filesInformation
-  for (const variableId of variableIds) {
-    const variable = await figma.variables.getVariableByIdAsync(variableId)
-    if (!variable) {
-      throw new Error(`Variable with ID ${variableId} not found`)
-    }
-
-    for (const fileInformation of filesInformation) {
-      if (variable.name.toLowerCase().includes(fileInformation.variableRootType)) {
-        const processedVariable = await processColorOrFloatVariable(variable, mode)
-        deepMerge(fileInformation.data, processedVariable[fileInformation.variableRootType])
-      }
-    }
-  }
-
-  // Serialize the data and add it to the files
-  for (const fileInformation of filesInformation) {
-    fileInformation.jsonFile.data = JSON.stringify(fileInformation.data, null, 2)
-    fileInformation.pythonFile.data = await fileInformation.serializer(fileInformation.data)
-  }
-
-  const files = filesInformation.flatMap(fi => [fi.jsonFile, fi.pythonFile])
-
-  return files
-}
-
-
-async function getTokensFile(collection: VariableCollection) {
-  return getPrimativesFiles(collection)
-}
-
-function getRootFile(collection: VariableCollection) {
-  const file = { fileName: "__init__.ts", body: {} }
-
-  return file
 }
 
 type VariableMode = {
