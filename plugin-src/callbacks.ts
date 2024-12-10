@@ -1,4 +1,4 @@
-import { FileDescription, Language, MessageEvents, PreferencePropertyTypes } from "./types"
+import { FileDescription, MessageEvents, PreferencePropertyTypes } from "./types"
 import { processCollection } from "./helpers"
 import { template as initTemplate } from "./templates/__init__"
 

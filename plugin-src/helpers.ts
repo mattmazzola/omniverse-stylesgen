@@ -1,4 +1,4 @@
-import { FileDescription, FileGroup } from "./types"
+import { FileDescription, FileGroup, HSLA } from "./types"
 import { deepMerge, rgbaToHsla, rgbToHex } from "./utilities"
 import { template as colorsTemplate } from "./templates/colors"
 import { template as structureTemplate } from "./templates/structure"
@@ -27,7 +27,7 @@ async function getPrimativesFiles(collection: VariableCollection): Promise<FileD
   // TODO: Add support for multiple modes
   const mode = modes[0]
 
-  const filesInformation: FileGroup[] = [
+  const fileGroups: FileGroup[] = [
     {
       variableRootType: "color",
       data: {},
@@ -69,6 +69,8 @@ async function getPrimativesFiles(collection: VariableCollection): Promise<FileD
     },
   ]
 
+  console.log({ fileGroups })
+
   // Merge all variable data into the filesInformation
   for (const variableId of variableIds) {
     const variable = await figma.variables.getVariableByIdAsync(variableId)
@@ -76,7 +78,7 @@ async function getPrimativesFiles(collection: VariableCollection): Promise<FileD
       throw new Error(`Variable with ID ${variableId} not found`)
     }
 
-    for (const fileInformation of filesInformation) {
+    for (const fileInformation of fileGroups) {
       if (variable.name.toLowerCase().includes(fileInformation.variableRootType)) {
         const processedVariable = await processColorOrFloatVariable(variable, mode)
         deepMerge(fileInformation.data, processedVariable[fileInformation.variableRootType])
@@ -85,12 +87,12 @@ async function getPrimativesFiles(collection: VariableCollection): Promise<FileD
   }
 
   // Serialize the data and add it to the files
-  for (const fileInformation of filesInformation) {
+  for (const fileInformation of fileGroups) {
     fileInformation.jsonFile.data = JSON.stringify(fileInformation.data, null, 2)
     fileInformation.pythonFile.data = await fileInformation.serializer(fileInformation.data)
   }
 
-  const files = filesInformation.flatMap(fi => [fi.jsonFile, fi.pythonFile])
+  const files = fileGroups.flatMap(fi => [fi.jsonFile, fi.pythonFile])
 
   return files
 }
@@ -113,6 +115,8 @@ async function getTokensFiles(collection: VariableCollection): Promise<FileDescr
     },
   ]
 
+  console.log({ fileGroups })
+
   // Serialize the data and add it to the files
   for (const fileGroup of fileGroups) {
     fileGroup.jsonFile.data = JSON.stringify(fileGroup.data, null, 2)
@@ -132,10 +136,14 @@ function getTemplate(template: string) {
 
 function serializeData(root_type: string, template: string) {
   return async function innerSerialize(data: object): Promise<string> {
-
     const sequences = getKeysToLeaf(data)
-    const lines = sequences.map(s => getLine(s))
+    const lines = sequences
+      .map(s => getLine(s as ValueSequence))
+      .map(l => `${root_type}_${l}`)
+      .sort()
+
     const serializedData = lines.join("\n") + "\n"
+    console.log({ root_type, data, sequences, lines, serializedData })
 
     return `
 ${serializedData}
@@ -147,50 +155,58 @@ ${template}
 
 type ValueSequence = (number | string | object)[]
 
-function getKeysToLeaf(data: object): ValueSequence {
-  return []
-}
-
-function getLine(sequence: number | string | object): string {
-  return ""
-}
-
-function getLinesOld(data: object): [number, string[]] {
-  const lines = []
-  let hue = 0
-
-  let line = ``
-
-  for (const [key, value] of Object.entries(data)) {
-    line = `${key.toLowerCase().replace(/-/g, "_")}`
-
-    if (typeof value !== "object") {
-      line += ` = ${value}`
-      lines.push(line)
+function getKeysToLeaf(data: Record<string, any>): ValueSequence[] {
+  // If the data is a leaf object, then return the sequence of value
+  if (typeof data["$type"] === "string") {
+    // If the data has an $hsla object, then return that
+    // Otherwise, return the value
+    if (typeof data["$hsla"] === "object") {
+      const hsla = data["$hsla"]
+      return [[hsla]]
     }
-    else if (typeof value === "object") {
-      // If the value has a $type key, then it's a leaf object
-      if (typeof value["$type"] === "string"
-        && typeof value["$rgba"] === "object") {
-        const { r, g, b, a: rbgAlpha } = value["$rgba"]
-        const rInt = Math.round(r * 255)
-        const gInt = Math.round(g * 255)
-        const bInt = Math.round(b * 255)
-        const { h, s, l, a: hslAlpha } = value["$hsla"]
-        hue = h
-
-        line += ` = convert_hsl_to_colorshade(${h.toFixed(0)}, ${s.toFixed(0)}, ${l.toFixed(0)})`
-        lines.push(line)
-      }
-      else {
-        const [h, ls] = getLines(value)
-        hue = h
-        lines.push(...ls)
-      }
+    else {
+      const value = data["$value"]
+      return [[value]]
     }
   }
 
-  return [hue, lines]
+  // If the data is not leaf, then get sequence of value, then prepend key to sequences
+  const sequences: ValueSequence[] = []
+
+  for (const [key, value] of Object.entries(data)) {
+    if (typeof value === "object") {
+      const keySequences = getKeysToLeaf(value).map(s => [key, ...s])
+      sequences.push(...keySequences)
+    }
+    else {
+      const keySequences = [[key, value]]
+      sequences.push(...keySequences)
+    }
+  }
+
+  return sequences
+}
+
+function getLine(sequence: ValueSequence): string {
+  /**
+   * Given sequence of [key1, key2, ..., color object] return
+   * color_gray_16 = convert_hsl_to_colorshade(0, 0, 16)
+   */
+
+  const last = sequence.pop()
+  const keys = sequence
+  const variableName = keys.map(s => s.toString().replace('-', '_')).join('_')
+  let variableValue
+
+  if (typeof last === "object") {
+    const hsla = last as HSLA
+    variableValue = `convert_hsl_to_colorshade(${hsla.h.toFixed(0)}, ${hsla.s.toFixed(0)}, ${hsla.l.toFixed(0)})`
+  }
+  else {
+    variableValue = last
+  }
+
+  return `${variableName} = ${variableValue}`
 }
 
 type VariableMode = {

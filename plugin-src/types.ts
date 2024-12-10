@@ -2,13 +2,18 @@ export enum Language {
     JSON = "json",
 }
 
+export type HSLA = {
+    h: number
+    s: number
+    l: number
+    a: number
+}
+
 export enum PreferencePropertyTypes {
     IFRAME = "iframe",
 }
 
 export enum MessageEvents {
-    FORMAT = "FORMAT",
-    FORMAT_RESULT = "FORMAT_RESULT",
     PREFERENCES_CHANGED = "PREFERENCES_CHANGED",
 }
 

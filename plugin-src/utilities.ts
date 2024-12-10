@@ -1,3 +1,5 @@
+import { HSLA } from "./types"
+
 export function rgbToHex({ r, g, b, a }: RGBA) {
     // If the alpha is not 1, return an rgba string since hex doesn't support alpha
     if (a !== 1) {
@@ -11,7 +13,7 @@ export function rgbToHex({ r, g, b, a }: RGBA) {
     return `#${hex}`
 }
 
-export function rgbaToHsla({ r, g, b, a }: RGBA) {
+export function rgbaToHsla({ r, g, b, a }: RGBA): HSLA {
     const max = Math.max(r, g, b)
     const min = Math.min(r, g, b)
     let h = 0
