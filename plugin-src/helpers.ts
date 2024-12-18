@@ -3,7 +3,7 @@ import { deepMerge, rgbaToHsla, rgbToHex } from "./utilities"
 import { getTemplate as getColorsTemplate } from "./templates/colors"
 import { getTemplate as getStructureTemplate } from "./templates/structure"
 import { template as tokensTemplate } from "./templates/tokens"
-import { template as fontsTemplate } from "./templates/fonts"
+import { getTemplate as getFontTemplate } from "./templates/fonts"
 
 export async function processCollection(collection: VariableCollection) {
   const files: FileDescription[] = []
@@ -65,7 +65,7 @@ async function getPrimativesFiles(collection: VariableCollection): Promise<FileD
         name: "fonts.py",
         data: "Empty Data",
       },
-      serializer: getStaticTemplate(fontsTemplate),
+      serializer: serializeData("font", getFontTemplate),
     },
   ]
 
