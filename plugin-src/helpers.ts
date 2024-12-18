@@ -1,7 +1,7 @@
 import { FileDescription, FileGroup, HSLA } from "./types"
 import { deepMerge, rgbaToHsla, rgbToHex } from "./utilities"
-import { template as colorsTemplate } from "./templates/colors"
-import { template as structureTemplate } from "./templates/structure"
+import { getTemplate as getColorsTemplate } from "./templates/colors"
+import { getTemplate as getStructureTemplate } from "./templates/structure"
 import { template as tokensTemplate } from "./templates/tokens"
 import { template as fontsTemplate } from "./templates/fonts"
 
@@ -39,7 +39,7 @@ async function getPrimativesFiles(collection: VariableCollection): Promise<FileD
         name: "colors.py",
         data: "Empty Data",
       },
-      serializer: serializeData("color", colorsTemplate),
+      serializer: serializeData("color", getColorsTemplate),
     },
     {
       variableRootType: "structure",
@@ -52,7 +52,7 @@ async function getPrimativesFiles(collection: VariableCollection): Promise<FileD
         name: "structure.py",
         data: "Empty Data",
       },
-      serializer: serializeData("structure", structureTemplate),
+      serializer: serializeData("structure", getStructureTemplate),
     },
     {
       variableRootType: "font",
@@ -65,7 +65,7 @@ async function getPrimativesFiles(collection: VariableCollection): Promise<FileD
         name: "fonts.py",
         data: "Empty Data",
       },
-      serializer: getTemplate(fontsTemplate),
+      serializer: getStaticTemplate(fontsTemplate),
     },
   ]
 
@@ -111,7 +111,7 @@ async function getTokensFiles(collection: VariableCollection): Promise<FileDescr
         name: "tokens.py",
         data: "Empty Data",
       },
-      serializer: getTemplate(tokensTemplate),
+      serializer: getStaticTemplate(tokensTemplate),
     },
   ]
 
@@ -128,13 +128,13 @@ async function getTokensFiles(collection: VariableCollection): Promise<FileDescr
   return files
 }
 
-function getTemplate(template: string) {
+function getStaticTemplate(template: string) {
   return async function innerSerialize(data: object): Promise<string> {
     return template
   }
 }
 
-function serializeData(root_type: string, template: string) {
+function serializeData(root_type: string, templateFunc: (values: string) => string) {
   return async function innerSerialize(data: object): Promise<string> {
     const sequences = getKeysToLeaf(data)
     const lines = sequences
@@ -142,14 +142,11 @@ function serializeData(root_type: string, template: string) {
       .map(l => `${root_type}_${l}`)
       .sort()
 
-    const serializedData = lines.join("\n") + "\n"
-    console.log({ root_type, data, sequences, lines, serializedData })
+    const joinedLines = lines.join("\n") + "\n"
+    const contents = templateFunc(joinedLines)
+    // console.info({ root_type, data, sequences, lines, joinedLines, templateEmpty: templateFunc(''), contents })
 
-    return `
-${serializedData}
-
-${template}
-`
+    return contents
   }
 }
 

@@ -14,8 +14,8 @@ token_text_color_custom_pressed = color_gray_45
 token_text_color_secondary = color_gray_58
 
 # Buttons
-token_button_radius = radius
-token_button_padding = padding
+token_button_radius = structure_radius_default
+token_button_padding = structure_padding_default
 
 token_buttons_primary_default = color_green_60_35
 token_buttons_primary_hover = color_green_43_52
@@ -54,8 +54,8 @@ token_radiobuttons_normal_pressed = color_gray_27
 token_radiobuttons_normal_disabled = color_gray_05
 
 # Combobox
-token_combobox_radius = radius
-token_combobox_padding = padding
+token_combobox_radius = structure_radius_default
+token_combobox_padding = structure_radding_default
 
 token_combobox_secondary_default = color_blue_51_27
 token_combobox_secondary_hover = color_blue_43_52
